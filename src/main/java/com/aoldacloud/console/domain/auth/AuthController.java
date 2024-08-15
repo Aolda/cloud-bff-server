@@ -1,10 +1,9 @@
-package com.aoldacloud.console.domain.auth.controller;
+package com.aoldacloud.console.domain.auth;
 
 import com.aoldacloud.console.domain.auth.dto.LoginDto;
 import com.aoldacloud.console.domain.auth.dto.ProjectInfoDto;
 import com.aoldacloud.console.domain.auth.dto.UserDto;
 import com.aoldacloud.console.global.ResponseWrapper;
-import com.aoldacloud.console.domain.auth.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -12,7 +11,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.openstack4j.model.identity.v3.Domain;

@@ -1,10 +1,9 @@
-package com.aoldacloud.console.domain.auth.service;
+package com.aoldacloud.console.domain.auth;
 
 import com.aoldacloud.console.domain.auth.dto.LoginDto;
 import com.aoldacloud.console.domain.auth.dto.ProjectInfoDto;
 import com.aoldacloud.console.domain.auth.dto.UserDto;
-import com.aoldacloud.console.domain.auth.repository.KeystoneRepository;
-import com.aoldacloud.console.security.entity.KeystoneUserDetails;
+import com.aoldacloud.console.global.repository.KeystoneRepository;
 import com.aoldacloud.console.util.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.openstack4j.model.identity.v3.Domain;
@@ -52,7 +51,7 @@ public class AuthService {
   public UserDto updateUserInfo(User user) {
     try {
       logger.info("사용자 [{}] 정보 업데이트 시도 중", user.getId());
-      UserDto dto = keystoneRepository.updateUser(user, user);
+      UserDto dto = keystoneRepository.updateUser(user);
       logger.info("사용자 [{}] 정보 업데이트 성공", user.getId());
       return dto;
     } catch (RuntimeException ex) {
@@ -188,11 +187,9 @@ public class AuthService {
         throw new IllegalArgumentException("프로젝트 ID가 유효하지 않습니다.");
       }
 
-      keystoneRepository.updateUser(user,
-              user.toBuilder()
+      keystoneRepository.updateUser(user.toBuilder()
                       .defaultProjectId(projectId)
-                      .build()
-      );
+                      .build());
 
       logger.info("기본 프로젝트 ID [{}]로 업데이트 성공", projectId);
       return projectId;

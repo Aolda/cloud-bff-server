@@ -31,6 +31,11 @@ public class ResponseWrapper<T> {
     return ResponseEntity.ok(new ResponseWrapper<>(true, data, null));
   }
 
+  @Schema(description = "성공적인 생성 응답을 생성합니다.")
+  public static <T> ResponseEntity<ResponseWrapper<T>> created(T data) {
+    return ResponseEntity.status(HttpStatus.CREATED).body(new ResponseWrapper<>(true, data, null));
+  }
+
   @Schema(description = "오류 응답을 생성합니다.")
   public static <T> ResponseEntity<ResponseWrapper<T>> error(String error, HttpStatus status) {
     return ResponseEntity.status(status).body(new ResponseWrapper<>(false, null, error));

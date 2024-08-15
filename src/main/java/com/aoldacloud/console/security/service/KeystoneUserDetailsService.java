@@ -1,6 +1,5 @@
 package com.aoldacloud.console.security.service;
 
-import com.aoldacloud.console.domain.auth.repository.KeystoneRepository;
 import com.aoldacloud.console.security.entity.KeystoneUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.openstack4j.model.identity.v3.User;
