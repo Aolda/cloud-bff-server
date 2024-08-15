@@ -38,8 +38,7 @@ public class AuthService {
   public Project getProjectDetails(String projectId) {
     try {
       logger.info("프로젝트 [{}] 상세 정보 요청 중", projectId);
-      User user = getCurrentUser();
-      Project project = keystoneRepository.getProjectById(user, projectId);
+      Project project = keystoneRepository.getProjectById(projectId);
       logger.info("프로젝트 [{}] 상세 정보 가져오기 성공", projectId);
       return project;
     } catch (RuntimeException ex) {
@@ -64,7 +63,7 @@ public class AuthService {
     try {
       logger.info("사용자 프로젝트 목록 요청 중");
       User user = getCurrentUser();
-      List<? extends Project> projects = keystoneRepository.getProjects(user);
+      List<? extends Project> projects = keystoneRepository.getProjects();
       logger.info("사용자 프로젝트 목록 가져오기 성공");
       return projects;
     } catch (RuntimeException ex) {
@@ -77,7 +76,7 @@ public class AuthService {
     try {
       logger.info("사용자 도메인 목록 요청 중");
       User user = getCurrentUser();
-      List<? extends Domain> domains = keystoneRepository.getDomains(user);
+      List<? extends Domain> domains = keystoneRepository.getDomains();
       logger.info("사용자 도메인 목록 가져오기 성공");
       return domains;
     } catch (RuntimeException ex) {
@@ -89,8 +88,7 @@ public class AuthService {
   public Domain getDomainDetails(String domainId) {
     try {
       logger.info("도메인 [{}] 상세 정보 요청 중", domainId);
-      User user = getCurrentUser();
-      Domain domain = keystoneRepository.getDomainById(user, domainId);
+      Domain domain = keystoneRepository.getDomainById(domainId);
       logger.info("도메인 [{}] 상세 정보 가져오기 성공", domainId);
       return domain;
     } catch (RuntimeException ex) {
@@ -102,8 +100,7 @@ public class AuthService {
   public Domain updateDomainInfo(Domain domain) {
     try {
       logger.info("도메인 [{}] 정보 업데이트 시도 중", domain.getId());
-      User user = getCurrentUser();
-      Domain updatedDomain = keystoneRepository.updateDomain(user, domain);
+      Domain updatedDomain = keystoneRepository.updateDomain(domain);
       logger.info("도메인 [{}] 정보 업데이트 성공", domain.getId());
       return updatedDomain;
     } catch (RuntimeException ex) {
@@ -115,8 +112,7 @@ public class AuthService {
   public List<? extends User> getAllUsers() {
     try {
       logger.info("모든 사용자 목록 요청 중");
-      User user = getCurrentUser();
-      List<? extends User> users = keystoneRepository.getUsers(user);
+      List<? extends User> users = keystoneRepository.getUsers();
       logger.info("모든 사용자 목록 가져오기 성공");
       return users;
     } catch (RuntimeException ex) {
@@ -128,8 +124,7 @@ public class AuthService {
   public User getUserDetails(String userId) {
     try {
       logger.info("사용자 [{}] 상세 정보 요청 중", userId);
-      User user = getCurrentUser();
-      User userDetails = keystoneRepository.getUserById(user, userId);
+      User userDetails = keystoneRepository.getUserById(userId);
       logger.info("사용자 [{}] 상세 정보 가져오기 성공", userId);
       return userDetails;
     } catch (RuntimeException ex) {
@@ -141,8 +136,7 @@ public class AuthService {
   public Project updateProjectInfo(Project project) {
     try {
       logger.info("프로젝트 업데이트 시도: projectId={}", project.getId());
-      User user = getCurrentUser();
-      Project updatedProject = keystoneRepository.updateProject(user, project);
+      Project updatedProject = keystoneRepository.updateProject(project);
       logger.info("프로젝트 업데이트 성공: projectId={}", project.getId());
       return updatedProject;
     } catch (RuntimeException ex) {
@@ -155,15 +149,14 @@ public class AuthService {
     try {
       logger.info("현재 프로젝트 및 사용 가능한 프로젝트 목록 요청 중");
       User user = getCurrentUser();
-
       String currentProjectId = user.getDefaultProjectId();
-      Project currentProject = keystoneRepository.getProjectById(user, currentProjectId);
+      Project currentProject = keystoneRepository.getProjectById(currentProjectId);
       if (currentProject == null) {
         logger.error("현재 프로젝트 ID [{}]가 유효하지 않습니다.", currentProjectId);
         throw new IllegalArgumentException("현재 프로젝트 ID가 유효하지 않습니다.");
       }
 
-      List<? extends Project> availableProjects = keystoneRepository.getProjects(user);
+      List<? extends Project> availableProjects = keystoneRepository.getProjects();
 
       logger.info("현재 프로젝트 및 사용 가능한 프로젝트 목록 가져오기 성공");
       return ProjectInfoDto.builder()
@@ -181,7 +174,7 @@ public class AuthService {
       logger.info("기본 프로젝트 ID [{}]로 업데이트 시도 중", projectId);
       User user = getCurrentUser();
 
-      Project project = keystoneRepository.getProjectById(user, projectId);
+      Project project = keystoneRepository.getProjectById(projectId);
       if (project == null) {
         logger.error("프로젝트 ID [{}]가 유효하지 않습니다.", projectId);
         throw new IllegalArgumentException("프로젝트 ID가 유효하지 않습니다.");
@@ -200,6 +193,6 @@ public class AuthService {
   }
 
   private User getCurrentUser() {
-    return SecurityUtils.getAuthenticatedUserDetails().getUser();
+    return SecurityUtils.getAuthenticatedUserDetails().getCloudSession().getToken().getUser();
   }
 }

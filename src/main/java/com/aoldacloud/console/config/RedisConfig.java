@@ -1,5 +1,6 @@
 package com.aoldacloud.console.config;
 
+import com.aoldacloud.console.security.entity.CloudSession;
 import org.openstack4j.model.identity.v3.User;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -22,9 +23,9 @@ public class RedisConfig {
     return new LettuceConnectionFactory(host, port);
   }
 
-  @Bean(name = "userRedisTemplate")
-  public RedisTemplate<String, User> userRedisTemplate() {
-    RedisTemplate<String, User> redisTemplate = new RedisTemplate<>();
+  @Bean(name = "cloudSessionRedisTemplate")
+  public RedisTemplate<String, CloudSession> cloudSessionRedisTemplate() {
+    RedisTemplate<String, CloudSession> redisTemplate = new RedisTemplate<>();
     redisTemplate.setConnectionFactory(redisConnectionFactory());
     return redisTemplate;
   }

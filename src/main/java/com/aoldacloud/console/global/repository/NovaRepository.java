@@ -141,6 +141,6 @@ public class NovaRepository {
   }
 
   private OSClientV3 getClient() {
-    return OpenstackService.getClient(SecurityUtils.getAuthenticatedUserDetails().getUser());
+    return OpenstackService.getClient();
   }
 }

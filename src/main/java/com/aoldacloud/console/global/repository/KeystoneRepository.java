@@ -2,6 +2,7 @@ package com.aoldacloud.console.global.repository;
 
 import com.aoldacloud.console.domain.auth.dto.UserDto;
 import com.aoldacloud.console.global.OpenstackService;
+import com.aoldacloud.console.security.entity.CloudSession;
 import com.aoldacloud.console.util.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +21,7 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class KeystoneRepository {
 
-  private final RedisTemplate<String, User> userRedisTemplate;
+  private final RedisTemplate<String, CloudSession> cloudSessionRedisTemplate;
 
   /**
    * 로그인한 사용자의 정보를 토대로 토큰을 생성하고, 해당 토큰을 Redis에 캐싱합니다.
@@ -44,7 +45,7 @@ public class KeystoneRepository {
 
       String token = SecurityUtils.generateToken(user.getId());
       user.toBuilder().password(password).build();
-      userRedisTemplate.opsForValue().set(token, user, 3, TimeUnit.HOURS);
+      cloudSessionRedisTemplate.opsForValue().set(token, CloudSession.builder().token(client.getToken()).build(), 3, TimeUnit.HOURS);
 
       user.toBuilder().password(null).build();
       return UserDto.builder()
@@ -57,9 +58,9 @@ public class KeystoneRepository {
     }
   }
 
-  public List<? extends Project> getProjects(User user) {
+  public List<? extends Project> getProjects() {
     try {
-      return OpenstackService.getClient(user)
+      return OpenstackService.getClient()
               .identity().projects()
               .list();
 
@@ -68,30 +69,29 @@ public class KeystoneRepository {
     }
   }
 
-  public Project getProjectById(User user, String projectId) {
+  public Project getProjectById(String projectId) {
     try {
-      return OpenstackService.getClient(user).identity().projects().get(projectId);
+      return OpenstackService.getClient().identity().projects().get(projectId);
     } catch (Exception ex) {
       throw new RuntimeException("프로젝트 정보를 가져오는 중 오류가 발생했습니다.", ex);
     }
   }
 
-  public Project updateProject(User user, Project project) {
+  public Project updateProject(Project project) {
     try {
-      Project updatedProject = OpenstackService.getClient(user)
+      Project updatedProject = OpenstackService.getClient()
               .identity().projects()
               .update(project);
 
-      userRedisTemplate.opsForValue().set(user.getId(), user);
       return updatedProject;
     } catch (Exception ex) {
       throw new RuntimeException("프로젝트 정보를 업데이트하는 중 오류가 발생했습니다.", ex);
     }
   }
 
-  public List<? extends Domain> getDomains(User user) {
+  public List<? extends Domain> getDomains() {
     try {
-      return OpenstackService.getClient(user)
+      return OpenstackService.getClient()
               .identity().domains()
               .list();
 
@@ -100,9 +100,9 @@ public class KeystoneRepository {
     }
   }
 
-  public Domain getDomainById(User user, String domainId) {
+  public Domain getDomainById(String domainId) {
     try {
-      return OpenstackService.getClient(user)
+      return OpenstackService.getClient()
               .identity().domains()
               .get(domainId);
 
@@ -111,22 +111,21 @@ public class KeystoneRepository {
     }
   }
 
-  public Domain updateDomain(User user, Domain domain) {
+  public Domain updateDomain(Domain domain) {
     try {
-      Domain updatedDomain = OpenstackService.getClient(user)
+      Domain updatedDomain = OpenstackService.getClient()
               .identity().domains()
               .update(domain);
 
-      userRedisTemplate.opsForValue().set(user.getId(), user); // 업데이트 후 사용자 정보를 다시 캐싱
       return updatedDomain;
     } catch (Exception ex) {
       throw new RuntimeException("도메인 정보를 업데이트하는 중 오류가 발생했습니다.", ex);
     }
   }
 
-  public List<? extends User> getUsers(User user) {
+  public List<? extends User> getUsers() {
     try {
-      return OpenstackService.getClient(user)
+      return OpenstackService.getClient()
               .identity().users()
               .list();
 
@@ -135,9 +134,9 @@ public class KeystoneRepository {
     }
   }
 
-  public User getUserById(User user, String userId) {
+  public User getUserById(String userId) {
     try {
-      return OpenstackService.getClient(user)
+      return OpenstackService.getClient()
               .identity().users()
               .get(userId);
 
@@ -148,15 +147,13 @@ public class KeystoneRepository {
 
   public UserDto updateUser(User updatedUser) {
     try {
-      User user = SecurityUtils.getAuthenticatedUserDetails().getUser();
-      User updatedUserEntity = OpenstackService.getClient(user)
+      User updatedUserEntity = OpenstackService.getClient()
               .identity().users()
               .update(updatedUser);
 
-      userRedisTemplate.opsForValue().set(user.getId(), updatedUserEntity);
       return UserDto.builder()
               .user(updatedUserEntity)
-              .authToken(user.getId())
+              .authToken(updatedUserEntity.getId())
               .build();
 
     } catch (Exception ex) {

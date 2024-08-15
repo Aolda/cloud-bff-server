@@ -2,6 +2,7 @@ package com.aoldacloud.console.security.filter;
 
 import com.aoldacloud.console.global.OpenstackService;
 import com.aoldacloud.console.global.ResponseWrapper;
+import com.aoldacloud.console.security.entity.CloudSession;
 import com.aoldacloud.console.security.entity.KeystoneUserDetails;
 import com.aoldacloud.console.security.service.KeystoneUserDetailsService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -34,7 +35,7 @@ public class KeystoneAuthenticationFilter extends OncePerRequestFilter {
 
   private static final Logger logger = LoggerFactory.getLogger(KeystoneAuthenticationFilter.class);
 
-  private final RedisTemplate<String, User> userRedisTemplate;
+  private final RedisTemplate<String, CloudSession> cloudSessionRedisTemplate;
 
   /**
    * 요청의 쿠키에서 인증 토큰을 가져옵니다.
@@ -69,9 +70,9 @@ public class KeystoneAuthenticationFilter extends OncePerRequestFilter {
    * @param authToken 인증 토큰
    * @return 유효한 경우 OSClientV3 객체, 그렇지 않으면 null
    */
-  private User validateToken(String authToken) {
+  private CloudSession validateToken(String authToken) {
     try {
-      return userRedisTemplate.opsForValue().get(authToken);
+      return cloudSessionRedisTemplate.opsForValue().get(authToken);
     } catch (Exception ex) {
       logger.warn("Keystone 토큰 검증 실패: {}", ex.getMessage());
       return null;
@@ -129,9 +130,9 @@ public class KeystoneAuthenticationFilter extends OncePerRequestFilter {
     }
 
     if (authToken != null) {
-      User user = validateToken(authToken);
-      if (user != null) {
-        KeystoneUserDetails userDetails = new KeystoneUserDetails(user);
+      CloudSession session = validateToken(authToken);
+      if (session != null) {
+        KeystoneUserDetails userDetails = new KeystoneUserDetails(session);
 
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                 userDetails, null, userDetails.getAuthorities());

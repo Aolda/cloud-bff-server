@@ -12,10 +12,10 @@ import java.util.Collection;
 @Getter
 public class KeystoneUserDetails implements UserDetails {
 
-  private final User user;
+  private final CloudSession cloudSession;
 
-  public KeystoneUserDetails(User user) {
-    this.user = user;
+  public KeystoneUserDetails(CloudSession session) {
+    this.cloudSession = session;
   }
 
   @Override
@@ -25,12 +25,12 @@ public class KeystoneUserDetails implements UserDetails {
 
   @Override
   public String getPassword() {
-    return user.getPassword(); // Password는 필요 없음 (토큰 기반)
+    return cloudSession.getToken().getCredentials().getPassword(); // Password는 필요 없음 (토큰 기반)
   }
 
   @Override
   public String getUsername() {
-    return user.getName(); // 사용자의 이름
+    return cloudSession.getToken().getCredentials().getName(); // 사용자의 이름
   }
 
   @Override
@@ -50,6 +50,6 @@ public class KeystoneUserDetails implements UserDetails {
 
   @Override
   public boolean isEnabled() {
-    return user.isEnabled();
+    return cloudSession.getToken().getUser().isEnabled();
   }
 }
