@@ -28,7 +28,8 @@ dependencies {
 	implementation 'com.github.codemonstur:embedded-redis:1.4.3'
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
-	implementation 'com.github.openstack4j.core:openstack4j:3.12'
+	implementation 'com.github.openstack4j.core:openstack4j-core:3.12'
+	implementation 'com.github.openstack4j.core.connectors:openstack4j-resteasy:3.12'
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.0.2'
 }
 

@@ -1,6 +1,7 @@
 package com.aoldacloud.console.domain.compute;
 
 import com.aoldacloud.console.domain.compute.dto.ServerCreateDto;
+import com.aoldacloud.console.domain.compute.dto.ServerDetailsDto;
 import com.aoldacloud.console.domain.compute.dto.ServerUpdateDto;
 import com.aoldacloud.console.global.ResponseWrapper;
 import io.swagger.v3.oas.annotations.Operation;
@@ -10,7 +11,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.openstack4j.model.compute.Server;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -29,26 +29,26 @@ public class ComputeController {
   @Operation(summary = "가상머신 생성", description = "새로운 가상머신을 생성합니다.")
   @ApiResponses(value = {
           @ApiResponse(responseCode = "201", description = "가상머신 생성 성공",
-                  content = @Content(mediaType = "application/json", schema = @Schema(implementation = Server.class))),
+                  content = @Content(mediaType = "application/json", schema = @Schema(implementation = ServerDetailsDto.class))),
           @ApiResponse(responseCode = "500", description = "서버 오류",
                   content = @Content(mediaType = "application/json"))
   })
   @PostMapping("/servers")
-  public ResponseEntity<ResponseWrapper<Server>> createServer(@RequestBody ServerCreateDto serverCreateDto) {
-    Server createdServer = computeService.createServer(serverCreateDto);
+  public ResponseEntity<ResponseWrapper<ServerDetailsDto>> createServer(@RequestBody ServerCreateDto serverCreateDto) {
+    ServerDetailsDto createdServer = computeService.createServer(serverCreateDto);
     return ResponseWrapper.created(createdServer);
   }
 
   @Operation(summary = "가상머신 업데이트", description = "기존 가상머신을 업데이트합니다.")
   @ApiResponses(value = {
           @ApiResponse(responseCode = "200", description = "가상머신 업데이트 성공",
-                  content = @Content(mediaType = "application/json", schema = @Schema(implementation = Server.class))),
+                  content = @Content(mediaType = "application/json", schema = @Schema(implementation = ServerDetailsDto.class))),
           @ApiResponse(responseCode = "500", description = "서버 오류",
                   content = @Content(mediaType = "application/json"))
   })
   @PutMapping("/servers")
-  public ResponseEntity<ResponseWrapper<Server>> updateServer(@RequestBody ServerUpdateDto serverUpdateDto) {
-    Server updatedServer = computeService.updateServer(serverUpdateDto);
+  public ResponseEntity<ResponseWrapper<ServerDetailsDto>> updateServer(@RequestBody ServerUpdateDto serverUpdateDto) {
+    ServerDetailsDto updatedServer = computeService.updateServer(serverUpdateDto);
     return ResponseWrapper.success(updatedServer);
   }
 
@@ -67,28 +67,28 @@ public class ComputeController {
   @Operation(summary = "가상머신 목록 조회", description = "가상머신 목록을 조회합니다.")
   @ApiResponses(value = {
           @ApiResponse(responseCode = "200", description = "가상머신 목록 조회 성공",
-                  content = @Content(mediaType = "application/json", schema = @Schema(implementation = Server.class))),
+                  content = @Content(mediaType = "application/json", schema = @Schema(implementation = ServerDetailsDto.class))),
           @ApiResponse(responseCode = "500", description = "서버 오류",
                   content = @Content(mediaType = "application/json"))
   })
   @GetMapping("/servers")
-  public ResponseEntity<ResponseWrapper<List<? extends Server>>> listServers() {
-    List<? extends Server> servers = computeService.listServers();
+  public ResponseEntity<ResponseWrapper<List<ServerDetailsDto>>> listServers() {
+    List<ServerDetailsDto> servers = computeService.listServers();
     return ResponseWrapper.success(servers);
   }
 
   @Operation(summary = "가상머신 상세 정보 조회", description = "특정 가상머신의 상세 정보를 조회합니다.")
   @ApiResponses(value = {
           @ApiResponse(responseCode = "200", description = "가상머신 상세 정보 조회 성공",
-                  content = @Content(mediaType = "application/json", schema = @Schema(implementation = Server.class))),
+                  content = @Content(mediaType = "application/json", schema = @Schema(implementation = ServerDetailsDto.class))),
           @ApiResponse(responseCode = "404", description = "가상머신을 찾을 수 없음",
                   content = @Content(mediaType = "application/json")),
           @ApiResponse(responseCode = "500", description = "서버 오류",
                   content = @Content(mediaType = "application/json"))
   })
   @GetMapping("/servers/{serverId}")
-  public ResponseEntity<ResponseWrapper<Server>> getServerDetails(@PathVariable String serverId) {
-    Server server = computeService.getServerDetails(serverId);
+  public ResponseEntity<ResponseWrapper<ServerDetailsDto>> getServerDetails(@PathVariable String serverId) {
+    ServerDetailsDto server = computeService.getServerDetails(serverId);
     if (server == null) {
       return ResponseWrapper.error("가상머신을 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
     }

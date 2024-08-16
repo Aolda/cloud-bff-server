@@ -1,6 +1,7 @@
 package com.aoldacloud.console.domain.compute;
 
 import com.aoldacloud.console.domain.compute.dto.ServerCreateDto;
+import com.aoldacloud.console.domain.compute.dto.ServerDetailsDto;
 import com.aoldacloud.console.domain.compute.dto.ServerUpdateDto;
 import com.aoldacloud.console.global.repository.NovaRepository;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -18,24 +20,24 @@ public class ComputeService {
 
   private final NovaRepository novaRepository;
 
-  public Server createServer(ServerCreateDto serverCreateDto) {
+  public ServerDetailsDto createServer(ServerCreateDto serverCreateDto) {
     try {
       log.info("가상머신 생성 요청: {}", serverCreateDto.getName());
       Server createdServer = novaRepository.createServer(serverCreateDto);
       log.info("가상머신 생성 성공: {}", createdServer.getId());
-      return createdServer;
+      return ServerDetailsDto.fromServer(createdServer);
     } catch (RuntimeException ex) {
       log.error("가상머신 생성 실패: {}", ex.getMessage());
       throw new RuntimeException("가상머신 생성 중 오류가 발생했습니다.", ex);
     }
   }
 
-  public Server updateServer(ServerUpdateDto serverUpdateDto) {
+  public ServerDetailsDto updateServer(ServerUpdateDto serverUpdateDto) {
     try {
       log.info("가상머신 업데이트 요청: {}", serverUpdateDto.getServerId());
       Server updatedServer = novaRepository.updateServer(serverUpdateDto);
       log.info("가상머신 업데이트 성공: {}", updatedServer.getId());
-      return updatedServer;
+      return ServerDetailsDto.fromServer(updatedServer);
     } catch (RuntimeException ex) {
       log.error("가상머신 업데이트 실패: {}", ex.getMessage());
       throw new RuntimeException("가상머신 업데이트 중 오류가 발생했습니다.", ex);
@@ -53,20 +55,26 @@ public class ComputeService {
     }
   }
 
-  public List<? extends Server> listServers() {
+  public List<ServerDetailsDto> listServers() {
     try {
       log.info("가상머신 목록 요청");
-      return novaRepository.listServers();
+      return novaRepository.listServers().stream()
+              .map(ServerDetailsDto::fromServer)
+              .collect(Collectors.toList());
     } catch (RuntimeException ex) {
       log.error("가상머신 목록 조회 실패: {}", ex.getMessage());
       throw new RuntimeException("가상머신 목록 조회 중 오류가 발생했습니다.", ex);
     }
   }
 
-  public Server getServerDetails(String serverId) {
+  public ServerDetailsDto getServerDetails(String serverId) {
     try {
       log.info("가상머신 상세 정보 요청: {}", serverId);
-      return novaRepository.getServerById(serverId);
+      Server server = novaRepository.getServerById(serverId);
+      if (server == null) {
+        return null;
+      }
+      return ServerDetailsDto.fromServer(server);
     } catch (RuntimeException ex) {
       log.error("가상머신 상세 정보 조회 실패: {}", ex.getMessage());
       throw new RuntimeException("가상머신 상세 정보 조회 중 오류가 발생했습니다.", ex);
