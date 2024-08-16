@@ -34,7 +34,7 @@ jobs:
           file: ./deploy/Dockerfile
           push: true
           platforms: linux/amd64
-          tags: ghcr.io/aolda/${{ github.repository }}:${{ steps.get-commit-sha.outputs.sha_short }}
+          tags: ghcr.io/aolda/cloud-bff-server:${{ steps.get-commit-sha.outputs.sha_short }}
 
       - name: Logout from GitHub Container Registry
         run: docker logout ghcr.io
