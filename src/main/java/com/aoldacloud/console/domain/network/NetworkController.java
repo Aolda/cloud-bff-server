@@ -1,6 +1,7 @@
 package com.aoldacloud.console.domain.network;
 
-import com.aoldacloud.console.domain.compute.dto.ServerDetailsDto;
+import com.aoldacloud.console.domain.network.dto.PortCreateDto;
+import com.aoldacloud.console.domain.network.dto.PortDetailsDto;
 import com.aoldacloud.console.domain.network.dto.SubnetCreateDto;
 import com.aoldacloud.console.domain.network.dto.SubnetDetailsDto;
 import com.aoldacloud.console.global.ResponseWrapper;
@@ -25,7 +26,7 @@ public class NetworkController {
     @Operation(summary = "서브넷 생성", description = "새로운 서브넷을 생성합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "서브넷 생성 성공",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ServerDetailsDto.class))),
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = SubnetDetailsDto.class))),
             @ApiResponse(responseCode = "500", description = "서버 오류",
                     content = @Content(mediaType = "application/json"))
     })
@@ -50,7 +51,7 @@ public class NetworkController {
     @Operation(summary = "서브넷 목록 조회", description = "서브넷 목록을 조회합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "서브넷 목록 조회 성공",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ServerDetailsDto.class))),
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = SubnetDetailsDto.class))),
             @ApiResponse(responseCode = "500", description = "서버 오류",
                     content = @Content(mediaType = "application/json"))
     })
@@ -63,7 +64,7 @@ public class NetworkController {
     @Operation(summary = "서브넷 상세 정보 조회", description = "특정 서브넷의 상세 정보를 조회합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "서브넷 상세 정보 조회 성공",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ServerDetailsDto.class))),
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = SubnetDetailsDto.class))),
             @ApiResponse(responseCode = "404", description = "서브넷을 찾을 수 없음",
                     content = @Content(mediaType = "application/json")),
             @ApiResponse(responseCode = "500", description = "서버 오류",
@@ -76,5 +77,61 @@ public class NetworkController {
             return ResponseWrapper.error("서브넷을 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
         }
         return ResponseWrapper.success(subnet);
+    }
+
+    @Operation(summary = "포트 생성", description = "새로운 포트를 생성합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "포트 생성 성공",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = PortDetailsDto.class))),
+            @ApiResponse(responseCode = "500", description = "서버 오류",
+                    content = @Content(mediaType = "application/json"))
+    })
+    @PostMapping("/ports")
+    public ResponseEntity<ResponseWrapper<PortDetailsDto>> createPort(@RequestBody PortCreateDto portCreateDto) {
+        PortDetailsDto createdPort = networkService.createPort(portCreateDto);
+        return ResponseWrapper.created(createdPort);
+    }
+
+    @Operation(summary = "포트 삭제", description = "포트를 삭제합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "포트 삭제 성공"),
+            @ApiResponse(responseCode = "500", description = "서버 오류",
+                    content = @Content(mediaType = "application/json"))
+    })
+    @DeleteMapping("/ports/{portId}")
+    public ResponseEntity<Void> deletePort(@PathVariable String portId) {
+        networkService.deletePort(portId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "포트 목록 조회", description = "포트 목록을 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "포트 목록 조회 성공",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = PortDetailsDto.class))),
+            @ApiResponse(responseCode = "500", description = "서버 오류",
+                    content = @Content(mediaType = "application/json"))
+    })
+    @GetMapping("/ports")
+    public ResponseEntity<ResponseWrapper<List<PortDetailsDto>>> listPorts() {
+        List<PortDetailsDto> ports = networkService.listPorts();
+        return ResponseWrapper.success(ports);
+    }
+
+    @Operation(summary = "포트 상세 정보 조회", description = "특정 포트의 상세 정보를 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "포트 상세 정보 조회 성공",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = PortDetailsDto.class))),
+            @ApiResponse(responseCode = "404", description = "포트를 찾을 수 없음",
+                    content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "500", description = "서버 오류",
+                    content = @Content(mediaType = "application/json"))
+    })
+    @GetMapping("/ports/{portId}")
+    public ResponseEntity<ResponseWrapper<PortDetailsDto>> getPortDetails(@PathVariable String portId) {
+        PortDetailsDto port = networkService.getPortDetails(portId);
+        if (port == null) {
+            return ResponseWrapper.error("포트를 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
+        }
+        return ResponseWrapper.success(port);
     }
 }
