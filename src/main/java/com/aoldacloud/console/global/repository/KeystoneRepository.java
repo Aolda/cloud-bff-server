@@ -7,8 +7,10 @@ import com.aoldacloud.console.util.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openstack4j.api.OSClient.OSClientV3;
+import org.openstack4j.model.common.Identifier;
 import org.openstack4j.model.identity.v3.Domain;
 import org.openstack4j.model.identity.v3.Project;
+import org.openstack4j.model.identity.v3.Token;
 import org.openstack4j.model.identity.v3.User;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
@@ -33,15 +35,7 @@ public class KeystoneRepository {
   public UserDto getUserByCredentials(String username, String password) {
     try {
       OSClientV3 client = OpenstackService.getClient(username,password);
-
       User user = client.getToken().getUser();
-      if (user.getDefaultProjectId() == null) {
-        List<? extends  Project> projects = client.identity().projects().list();
-        if (!projects.isEmpty()) {
-          Project project = projects.getFirst();
-          user.toBuilder().defaultProjectId(project.getId()).build();
-        }
-      }
 
       String token = SecurityUtils.generateToken(user.getId());
       user.toBuilder().password(password).build();
@@ -58,11 +52,49 @@ public class KeystoneRepository {
     }
   }
 
+  /**
+   * 로그인한 사용자의 정보를 토대로 토큰을 생성하고, 해당 토큰을 Redis에 캐싱합니다.
+   *
+   * @param username 사용자 이름
+   * @param password 사용자 패스워드
+   * @param project 프로젝트 식별자
+   * @return 사용자 정보와 생성된 토큰을 포함한 UserDto
+   */
+  public UserDto getUserByCredentials(String username, String password, Identifier project) {
+    try {
+      OSClientV3 client = OpenstackService.getClient(username,password, project);
+      String token = SecurityUtils.getAuthenticatedUserDetails().getAuthToken();
+
+      cloudSessionRedisTemplate.opsForValue().set(token, CloudSession.builder().token(client.getToken()).build(), 3, TimeUnit.HOURS);
+
+      return UserDto.builder()
+              .user(client.getToken().getUser())
+              .authToken(token)
+              .build();
+    } catch (Exception ex) {
+      log.error(ex.getLocalizedMessage());
+      throw new RuntimeException("Keystone에서 사용자 정보를 가져오는 중 오류가 발생했습니다.", ex);
+    }
+  }
+
   public List<? extends Project> getProjects() {
     try {
       return OpenstackService.getClient()
               .identity().projects()
               .list();
+
+    } catch (Exception ex) {
+      throw new RuntimeException("프로젝트 목록을 가져오는 중 오류가 발생했습니다.", ex);
+    }
+  }
+
+  public List<? extends Project> getUserProjects() {
+    try {
+      Token token = SecurityUtils.getSessionToken();
+
+      return OpenstackService.getClient()
+              .identity().users()
+              .listUserProjects(token.getUser().getId());
 
     } catch (Exception ex) {
       throw new RuntimeException("프로젝트 목록을 가져오는 중 오류가 발생했습니다.", ex);

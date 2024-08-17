@@ -25,6 +25,6 @@ public class KeystoneUserDetailsService implements UserDetailsService {
       throw new UsernameNotFoundException("Keystone 사용자 정보를 찾을 수 없습니다.");
     }
 
-    return new KeystoneUserDetails(session);
+    return new KeystoneUserDetails(session, authToken);
   }
 }

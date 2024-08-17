@@ -132,7 +132,7 @@ public class KeystoneAuthenticationFilter extends OncePerRequestFilter {
     if (authToken != null) {
       CloudSession session = validateToken(authToken);
       if (session != null) {
-        KeystoneUserDetails userDetails = new KeystoneUserDetails(session);
+        KeystoneUserDetails userDetails = new KeystoneUserDetails(session, authToken);
 
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                 userDetails, null, userDetails.getAuthorities());

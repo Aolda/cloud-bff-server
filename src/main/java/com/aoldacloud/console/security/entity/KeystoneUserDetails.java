@@ -13,9 +13,11 @@ import java.util.Collection;
 public class KeystoneUserDetails implements UserDetails {
 
   private final CloudSession cloudSession;
+  private final String authToken;
 
-  public KeystoneUserDetails(CloudSession session) {
+  public KeystoneUserDetails(CloudSession session, String authToken) {
     this.cloudSession = session;
+    this.authToken = authToken;
   }
 
   @Override

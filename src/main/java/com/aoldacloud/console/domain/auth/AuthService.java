@@ -6,8 +6,10 @@ import com.aoldacloud.console.domain.auth.dto.UserDto;
 import com.aoldacloud.console.global.repository.KeystoneRepository;
 import com.aoldacloud.console.util.SecurityUtils;
 import lombok.RequiredArgsConstructor;
+import org.openstack4j.model.common.Identifier;
 import org.openstack4j.model.identity.v3.Domain;
 import org.openstack4j.model.identity.v3.Project;
+import org.openstack4j.model.identity.v3.Token;
 import org.openstack4j.model.identity.v3.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -148,44 +150,40 @@ public class AuthService {
   public ProjectInfoDto getCurrentProjectAndAvailableProjects() {
     try {
       logger.info("현재 프로젝트 및 사용 가능한 프로젝트 목록 요청 중");
-      User user = getCurrentUser();
-      String currentProjectId = user.getDefaultProjectId();
-      Project currentProject = keystoneRepository.getProjectById(currentProjectId);
+      Token token = getCurrentToken();
+      Project currentProject = token.getProject();
       if (currentProject == null) {
-        logger.error("현재 프로젝트 ID [{}]가 유효하지 않습니다.", currentProjectId);
-        throw new IllegalArgumentException("현재 프로젝트 ID가 유효하지 않습니다.");
+        logger.error("현재 프로젝트 ID [token: {}, user: {}]가 유효하지 않습니다.", token.getId(), token.getUser().getId());
+        throw new IllegalArgumentException("현재 프로젝트가 유효하지 않습니다.");
       }
 
-      List<? extends Project> availableProjects = keystoneRepository.getProjects();
+      List<? extends Project> availableProjects = keystoneRepository.getUserProjects();
 
       logger.info("현재 프로젝트 및 사용 가능한 프로젝트 목록 가져오기 성공");
-      return ProjectInfoDto.builder()
-              .currentProject(currentProject)
-              .availableProjects(availableProjects)
-              .build();
+      return ProjectInfoDto.fromProjects(currentProject, availableProjects);
     } catch (RuntimeException ex) {
       logger.error("현재 프로젝트 및 사용 가능한 프로젝트 목록 가져오기 실패: {}", ex.getMessage());
       throw ex;
     }
   }
 
-  public String updateCurrentProjectId(String projectId) {
+  public ProjectInfoDto updateCurrentProjectId(String projectId) {
     try {
       logger.info("기본 프로젝트 ID [{}]로 업데이트 시도 중", projectId);
-      User user = getCurrentUser();
+      Token token = getCurrentToken();
 
       Project project = keystoneRepository.getProjectById(projectId);
       if (project == null) {
         logger.error("프로젝트 ID [{}]가 유효하지 않습니다.", projectId);
         throw new IllegalArgumentException("프로젝트 ID가 유효하지 않습니다.");
       }
-
-      keystoneRepository.updateUser(user.toBuilder()
-                      .defaultProjectId(projectId)
-                      .build());
-
+      keystoneRepository.getUserByCredentials(token.getCredentials().getUsername(), token.getCredentials().getPassword(), Identifier.byId(projectId));
       logger.info("기본 프로젝트 ID [{}]로 업데이트 성공", projectId);
-      return projectId;
+
+      Project currentProject = token.getProject();
+      List<? extends Project> availableProjects = keystoneRepository.getUserProjects();
+
+      return ProjectInfoDto.fromProjects(currentProject, availableProjects);
     } catch (RuntimeException ex) {
       logger.error("기본 프로젝트 ID 업데이트 실패: {}", ex.getMessage());
       throw ex;
@@ -193,6 +191,10 @@ public class AuthService {
   }
 
   private User getCurrentUser() {
-    return SecurityUtils.getAuthenticatedUserDetails().getCloudSession().getToken().getUser();
+    return getCurrentToken().getUser();
+  }
+
+  private Token getCurrentToken() {
+    return SecurityUtils.getAuthenticatedUserDetails().getCloudSession().getToken();
   }
 }

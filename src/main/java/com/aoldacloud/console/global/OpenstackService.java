@@ -42,5 +42,13 @@ public enum OpenstackService {
             .authenticate();
   }
 
+  public static OSClient.OSClientV3 getClient(String username, String password, Identifier project) {
+    return OSFactory.builderV3()
+            .endpoint(OpenstackService.Keystone.getEndpoint())
+            .credentials(username, password, Identifier.byName("default"))
+            .scopeToProject(project)
+            .authenticate();
+  }
+
 
 }

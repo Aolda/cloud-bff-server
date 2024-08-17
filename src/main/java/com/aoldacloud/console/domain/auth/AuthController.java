@@ -2,8 +2,11 @@ package com.aoldacloud.console.domain.auth;
 
 import com.aoldacloud.console.domain.auth.dto.LoginDto;
 import com.aoldacloud.console.domain.auth.dto.ProjectInfoDto;
+import com.aoldacloud.console.domain.auth.dto.UserDetailDto;
 import com.aoldacloud.console.domain.auth.dto.UserDto;
+import com.aoldacloud.console.global.OpenstackService;
 import com.aoldacloud.console.global.ResponseWrapper;
+import com.aoldacloud.console.util.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -34,6 +37,26 @@ public class AuthController {
   private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
   private final AuthService authService;
 
+  @Operation(summary = "인증 확인", description = "로그인 된 사용자인지 확인합니다.")
+  @ApiResponses(value = {
+          @ApiResponse(responseCode = "200", description = "로그인 된 사용자",
+                  content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserDetailDto.class))),
+          @ApiResponse(responseCode = "401", description = "자격 증명 오류",
+                  content = @Content(mediaType = "application/json"))
+  })
+  @GetMapping()
+  public ResponseEntity<ResponseWrapper<UserDetailDto>> getIsLogin() {
+    try {
+      return ResponseWrapper.success(UserDetailDto.fromToken(
+              SecurityUtils.getAuthenticatedUserDetails()
+                      .getCloudSession()
+                      .getToken()));
+    } catch (RuntimeException ex) {
+      return ResponseWrapper.error("자격 증명 오류", HttpStatus.UNAUTHORIZED);
+    }
+  }
+
+
   @Operation(summary = "자격 증명을 사용한 로그인", description = "사용자 이름과 비밀번호를 사용하여 로그인합니다.", security = @SecurityRequirement(name = "AoldaCloudAuth"))
   @ApiResponses(value = {
           @ApiResponse(responseCode = "200", description = "로그인 성공",
@@ -50,8 +73,8 @@ public class AuthController {
 
       ResponseCookie cookie = ResponseCookie.from("X-AUTH-TOKEN", userDto.getAuthToken())
               .path("/")
-              .sameSite("None")
-              .httpOnly(false)
+              .sameSite("Strict")
+              .httpOnly(true)
               .secure(false)
               .maxAge(3 * 60 * 60)
               .build();
@@ -62,6 +85,28 @@ public class AuthController {
     } catch (RuntimeException ex) {
       logger.error("ID/Password 로그인 실패: {}", ex.getMessage());
       return ResponseWrapper.error("로그인 실패", HttpStatus.UNAUTHORIZED);
+    }
+  }
+
+  @Operation(summary = "로그아웃", description = "사용자의 인증 토큰 쿠키를 제거하여 로그아웃합니다.")
+  @ApiResponses(value = {
+          @ApiResponse(responseCode = "200", description = "로그아웃 성공"),
+          @ApiResponse(responseCode = "500", description = "서버 오류")
+  })
+  @GetMapping("/logout")
+  public ResponseEntity<ResponseWrapper<String>> logout(HttpServletResponse response) {
+    try {
+      ResponseCookie cookie = ResponseCookie.from("X-AUTH-TOKEN", "")
+              .path("/")
+              .sameSite("Strict")
+              .httpOnly(true)
+              .secure(false)
+              .maxAge(0) // 쿠키 만료
+              .build();
+      response.addHeader("Set-Cookie", cookie.toString());
+      return ResponseWrapper.success("");
+    } catch (RuntimeException ex) {
+      return ResponseWrapper.error("서버 오류", HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -221,15 +266,14 @@ public class AuthController {
   @Operation(summary = "현재 프로젝트 업데이트", description = "현재 인증된 사용자의 기본 프로젝트 ID를 업데이트합니다.")
   @ApiResponses(value = {
           @ApiResponse(responseCode = "200", description = "기본 프로젝트 업데이트 성공",
-                  content = @Content(mediaType = "application/json")),
+                  content = @Content(mediaType = "application/json", schema = @Schema(implementation = ProjectInfoDto.class))),
           @ApiResponse(responseCode = "400", description = "유효하지 않은 프로젝트 ID",
                   content = @Content(mediaType = "application/json")),
           @ApiResponse(responseCode = "500", description = "기본 프로젝트를 업데이트하는 중 오류 발생",
                   content = @Content(mediaType = "application/json"))
   })
   @PutMapping("/projects/current")
-  public ResponseEntity<ResponseWrapper<String>> updateCurrentProject(@RequestParam String projectId) {
-    String updatedProjectId = authService.updateCurrentProjectId(projectId);
-    return ResponseWrapper.success(updatedProjectId);
+  public ResponseEntity<ResponseWrapper<ProjectInfoDto>> updateCurrentProject(@RequestParam String projectId) {
+    return ResponseWrapper.success( authService.updateCurrentProjectId(projectId));
   }
 }
