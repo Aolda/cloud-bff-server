@@ -5,6 +5,7 @@ import com.aoldacloud.console.global.repository.NeutronRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openstack4j.model.network.Port;
+import org.openstack4j.model.network.Router;
 import org.openstack4j.model.network.Subnet;
 import org.springframework.stereotype.Service;
 
@@ -125,6 +126,97 @@ public class NetworkService {
     } catch (RuntimeException ex) {
       log.error("포트 상세 정보 조회 실패: {}", ex.getMessage());
       throw new RuntimeException("포트 상세 정보 조회 중 오류가 발생했습니다.", ex);
+    }
+  }
+
+  public RouterDetailsDto createRouter(RouterCreateDto routerCreateDto) {
+    try {
+      log.info("라우터 생성 요청: {}", routerCreateDto.getName());
+      Router createdRouter = neutronRepository.createRouter(routerCreateDto);
+      log.info("라우터 생성 성공: {}", createdRouter.getId());
+      return new RouterDetailsDto(createdRouter);
+    } catch (RuntimeException ex) {
+      log.error("라우터 생성 실패: {}", ex.getMessage());
+      throw new RuntimeException("포트 생성 중 오류가 발생했습니다.", ex);
+    }
+  }
+
+  public RouterDetailsDto updateRouter(RouterUpdateDto routerUpdateDto) {
+    try {
+      log.info("라우터 업데이트 요청: {}", routerUpdateDto.getRouterId());
+      Router updatedRouter = neutronRepository.updateRouter(routerUpdateDto);
+      log.info("라우터 업데이트 성공: {}", updatedRouter.getId());
+      return new RouterDetailsDto(updatedRouter);
+    } catch (RuntimeException ex) {
+      log.error("라우터 업데이트 실패: {}", ex.getMessage());
+      throw new RuntimeException("라우터 업데이트 중 오류가 발생했습니다.", ex);
+    }
+  }
+
+  public void deleteRouter(String routerId) {
+    try {
+      log.info("라우터 삭제 요청: {}", routerId);
+      neutronRepository.deleteRouter(routerId);
+      log.info("라우터 삭제 성공: {}", routerId);
+    } catch (RuntimeException ex) {
+      log.error("라우터 삭제 실패: {}", ex.getMessage());
+      throw new RuntimeException("라우터 삭제 중 오류가 발생했습니다.", ex);
+    }
+  }
+
+  public List<RouterDetailsDto> listRouters() {
+    try {
+      log.info("라우터 목록 요청");
+      return neutronRepository.listRouters().stream()
+              .map(RouterDetailsDto::new)
+              .collect(Collectors.toList());
+    } catch (RuntimeException ex) {
+      log.error("라우터 목록 조회 실패: {}", ex.getMessage());
+      throw new RuntimeException("라우터 목록 조회 중 오류가 발생했습니다.", ex);
+    }
+  }
+
+  public RouterDetailsDto getRouterDetails(String routerId) {
+    try {
+      log.info("라우터 상세 정보 요청: {}", routerId);
+      Router router = neutronRepository.getRouterById(routerId);
+      if (router == null) {
+        return null;
+      }
+      return new RouterDetailsDto(router);
+    } catch (RuntimeException ex) {
+      log.error("라우터 상세 정보 조회 실패: {}", ex.getMessage());
+      throw new RuntimeException("라우터 상세 정보 조회 중 오류가 발생했습니다.", ex);
+    }
+  }
+
+  public void attachRouter(RouterAttachDetachDto routerAttachDetachDto) {
+    try {
+      log.info("라우터 인터페이스 연결 요청: {}", routerAttachDetachDto.getRouterId());
+      neutronRepository.attachRouter(routerAttachDetachDto);
+    } catch (RuntimeException ex) {
+      log.error("라우터 인터페이스 연결 실패: {}", ex.getMessage());
+      throw new RuntimeException("라우터 인터페이스 연결 중 오류가 발생했습니다.", ex);
+    }
+  }
+
+  public void detachRouter(RouterAttachDetachDto routerAttachDetachDto) {
+    try {
+      log.info("라우터 인터페이스 연결 해제 요청: {}", routerAttachDetachDto.getRouterId());
+      neutronRepository.detachRouter(routerAttachDetachDto);
+    } catch (RuntimeException ex) {
+      log.error("라우터 인터페이스 연결 해제 실패: {}", ex.getMessage());
+      throw new RuntimeException("라우터 인터페이스 연결 해제 중 오류가 발생했습니다.", ex);
+    }
+  }
+
+  public void toggleStateRouter(RouterToggleStateDto routerToggleStateDto) {
+    try {
+      log.info("라우터 상태 변경 요청: {}", routerToggleStateDto.getRouterId());
+      neutronRepository.toggleStateRouter(routerToggleStateDto);
+    } catch (RuntimeException ex) {
+      log.error("라우터 상태 변경 실패: {}", ex.getMessage());
+      throw new RuntimeException("라우터 상태 변경 중 오류가 발생했습니다.", ex);
     }
   }
 }

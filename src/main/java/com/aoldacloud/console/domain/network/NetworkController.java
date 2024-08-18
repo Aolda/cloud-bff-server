@@ -1,9 +1,7 @@
 package com.aoldacloud.console.domain.network;
 
-import com.aoldacloud.console.domain.network.dto.PortCreateDto;
-import com.aoldacloud.console.domain.network.dto.PortDetailsDto;
-import com.aoldacloud.console.domain.network.dto.SubnetCreateDto;
-import com.aoldacloud.console.domain.network.dto.SubnetDetailsDto;
+import com.aoldacloud.console.domain.compute.dto.ServerDetailsDto;
+import com.aoldacloud.console.domain.network.dto.*;
 import com.aoldacloud.console.global.ResponseWrapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -92,6 +90,19 @@ public class NetworkController {
         return ResponseWrapper.created(createdPort);
     }
 
+    @Operation(summary = "포트 업데이트", description = "기존 포트를 업데이트합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "포트 업데이트 성공",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ServerDetailsDto.class))),
+            @ApiResponse(responseCode = "500", description = "서버 오류",
+                    content = @Content(mediaType = "application/json"))
+    })
+    @PutMapping("/ports")
+    public ResponseEntity<ResponseWrapper<PortDetailsDto>> updatePort(@RequestBody PortUpdateDto portUpdateDto) {
+        PortDetailsDto updatedPort = networkService.updatePort(portUpdateDto);
+        return ResponseWrapper.success(updatedPort);
+    }
+
     @Operation(summary = "포트 삭제", description = "포트를 삭제합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "포트 삭제 성공"),
@@ -133,5 +144,110 @@ public class NetworkController {
             return ResponseWrapper.error("포트를 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
         }
         return ResponseWrapper.success(port);
+    }
+
+    @Operation(summary = "라우터 생성", description = "새로운 라우터를 생성합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "라우터 생성 성공",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = PortDetailsDto.class))),
+            @ApiResponse(responseCode = "500", description = "서버 오류",
+                    content = @Content(mediaType = "application/json"))
+    })
+    @PostMapping("/routers")
+    public ResponseEntity<ResponseWrapper<RouterDetailsDto>> createRouter(@RequestBody RouterCreateDto routerCreateDto) {
+        RouterDetailsDto createdRouter = networkService.createRouter(routerCreateDto);
+        return ResponseWrapper.created(createdRouter);
+    }
+
+    @Operation(summary = "라우터 업데이트", description = "기존 라우터를 업데이트합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "라우터 업데이트 성공",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ServerDetailsDto.class))),
+            @ApiResponse(responseCode = "500", description = "서버 오류",
+                    content = @Content(mediaType = "application/json"))
+    })
+    @PutMapping("/routers")
+    public ResponseEntity<ResponseWrapper<RouterDetailsDto>> updateRouter(@RequestBody RouterUpdateDto routerUpdateDto) {
+        RouterDetailsDto updatedRouter = networkService.updateRouter(routerUpdateDto);
+        return ResponseWrapper.success(updatedRouter);
+    }
+
+    @Operation(summary = "라우터 삭제", description = "라우터를 삭제합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "라우터 삭제 성공"),
+            @ApiResponse(responseCode = "500", description = "서버 오류",
+                    content = @Content(mediaType = "application/json"))
+    })
+    @DeleteMapping("/routers/{routerId}")
+    public ResponseEntity<Void> deleteRouter(@PathVariable String routerId) {
+        networkService.deleteRouter(routerId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "라우터 목록 조회", description = "라우터 목록을 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "라우터 목록 조회 성공",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = PortDetailsDto.class))),
+            @ApiResponse(responseCode = "500", description = "서버 오류",
+                    content = @Content(mediaType = "application/json"))
+    })
+    @GetMapping("/routers")
+    public ResponseEntity<ResponseWrapper<List<RouterDetailsDto>>> listRouters() {
+        List<RouterDetailsDto> routers = networkService.listRouters();
+        return ResponseWrapper.success(routers);
+    }
+
+    @Operation(summary = "라우터 상세 정보 조회", description = "특정 라우터의 상세 정보를 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "라우터 상세 정보 조회 성공",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = PortDetailsDto.class))),
+            @ApiResponse(responseCode = "404", description = "라우터를 찾을 수 없음",
+                    content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "500", description = "서버 오류",
+                    content = @Content(mediaType = "application/json"))
+    })
+    @GetMapping("/routers/{routerId}")
+    public ResponseEntity<ResponseWrapper<RouterDetailsDto>> getRouterDetails(@PathVariable String routerId) {
+        RouterDetailsDto router = networkService.getRouterDetails(routerId);
+        if (router == null) {
+            return ResponseWrapper.error("라우터를 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
+        }
+        return ResponseWrapper.success(router);
+    }
+
+    @Operation(summary = "라우터 인터페이스 연결", description = "라우터와 인터페이스를 연결합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "라우터 연결 성공"),
+            @ApiResponse(responseCode = "500", description = "서버 오류",
+                    content = @Content(mediaType = "application/json"))
+    })
+    @PostMapping("/routers/attach")
+    public ResponseEntity<Void> attachRouter(@RequestBody RouterAttachDetachDto routerAttachDetachDto) {
+        networkService.attachRouter(routerAttachDetachDto);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "라우터 인터페이스 연결 해제", description = "라우터와 인터페이스의 연결을 해제합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "라우터 연결 해제 성공"),
+            @ApiResponse(responseCode = "500", description = "서버 오류",
+                    content = @Content(mediaType = "application/json"))
+    })
+    @PostMapping("/routers/detach")
+    public ResponseEntity<Void> detachRouter(@RequestBody RouterAttachDetachDto routerAttachDetachDto) {
+        networkService.detachRouter(routerAttachDetachDto);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "라우터 AdminState 변경", description = "라우터의 AdminState를 변경합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "라우터 AdminState 변경 성공"),
+            @ApiResponse(responseCode = "500", description = "서버 오류",
+                    content = @Content(mediaType = "application/json"))
+    })
+    @PutMapping("/routers/state")
+    public ResponseEntity<Void> toggleStateRouter(@RequestBody RouterToggleStateDto routerToggleStateDto) {
+        networkService.toggleStateRouter(routerToggleStateDto);
+        return ResponseEntity.noContent().build();
     }
 }

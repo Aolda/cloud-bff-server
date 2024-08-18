@@ -1,18 +1,12 @@
 package com.aoldacloud.console.global.repository;
 
-import com.aoldacloud.console.domain.compute.dto.ServerUpdateDto;
-import com.aoldacloud.console.domain.network.dto.PortCreateDto;
-import com.aoldacloud.console.domain.network.dto.PortUpdateDto;
-import com.aoldacloud.console.domain.network.dto.SubnetCreateDto;
+import com.aoldacloud.console.domain.network.dto.*;
 import com.aoldacloud.console.global.OpenstackService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openstack4j.api.Builders;
 import org.openstack4j.api.OSClient.OSClientV3;
-import org.openstack4j.model.compute.Server;
-import org.openstack4j.model.network.IP;
-import org.openstack4j.model.network.Port;
-import org.openstack4j.model.network.Subnet;
+import org.openstack4j.model.network.*;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -91,18 +85,18 @@ public class NeutronRepository {
       OSClientV3 os = getClient();
       String fixedIpAddress = portUpdateDto.getFixedIps().stream().map(IP::getIpAddress).toString();
       String fixedSubnetId = portUpdateDto.getFixedIps().stream().map(IP::getSubnetId).toString();
-
-      os.networking().port().update(
+      Port port = os.networking().port().get(portUpdateDto.getPortId());
+      port = os.networking().port().update(
               Builders.port()
                       .name(portUpdateDto.getName())
                       .networkId(portUpdateDto.getNetworkId())
                       .fixedIp(fixedIpAddress, fixedSubnetId)
                       .build()
       );
-      return os.networking().port().get(portUpdateDto.getPortId());
+      return port;
     } catch (Exception ex) {
-      log.error("가상머신 업데이트 중 오류 발생: {}", ex.getMessage());
-      throw new RuntimeException("가상머신 업데이트 중 오류가 발생했습니다.", ex);
+      log.error("포트 업데이트 중 오류 발생: {}", ex.getMessage());
+      throw new RuntimeException("포트 업데이트 중 오류가 발생했습니다.", ex);
     }
   }
 
@@ -133,6 +127,112 @@ public class NeutronRepository {
     } catch (Exception ex) {
       log.error("포트 상세 정보 조회 중 오류 발생: {}", ex.getMessage());
       throw new RuntimeException("포트 상세 정보 조회 중 오류가 발생했습니다.", ex);
+    }
+  }
+
+  public Router createRouter(RouterCreateDto routerCreateDto) {
+    try {
+      OSClientV3 os = getClient();
+
+      return os.networking().router().create(Builders.router()
+              .name(routerCreateDto.getName())
+              .adminStateUp(routerCreateDto.isAdminStateUp())
+              .externalGateway(routerCreateDto.getNetworkId())
+              .route(routerCreateDto.getDestination(), routerCreateDto.getNextHop())
+              .build());
+    } catch (Exception ex) {
+      log.error("라우터 생성 중 오류 발생: {}", ex.getMessage());
+      throw new RuntimeException("라우터 생성 중 오류가 발생했습니다.", ex);
+    }
+  }
+
+  public Router updateRouter(RouterUpdateDto routerUpdateDto) {
+    try {
+      OSClientV3 os = getClient();
+      Router router = os.networking().router().get(routerUpdateDto.getRouterId());
+      router = os.networking().router().update(
+              Builders.router()
+                      .name(routerUpdateDto.getName())
+                      .adminStateUp(routerUpdateDto.isAdminStateUp())
+                      .externalGateway(routerUpdateDto.getNetworkId())
+                      .route(routerUpdateDto.getDestination(), routerUpdateDto.getNextHop())
+                      .build()
+      );
+      return router;
+    } catch (Exception ex) {
+      log.error("라우터 업데이트 중 오류 발생: {}", ex.getMessage());
+      throw new RuntimeException("라우터 업데이트 중 오류가 발생했습니다.", ex);
+    }
+  }
+
+  public void deleteRouter(String routerId) {
+    try {
+      OSClientV3 os = getClient();
+      os.networking().router().delete(routerId);
+    } catch (Exception ex) {
+      log.error("라우터 삭제 중 오류 발생: {}", ex.getMessage());
+      throw new RuntimeException("라우터 삭제 중 오류가 발생했습니다.", ex);
+    }
+  }
+
+  public List<? extends Router> listRouters() {
+    try {
+      OSClientV3 os = getClient();
+      return os.networking().router().list();
+    } catch (Exception ex) {
+      log.error("라우터 목록 조회 중 오류 발생: {}", ex.getMessage());
+      throw new RuntimeException("라우터 목록 조회 중 오류가 발생했습니다.", ex);
+    }
+  }
+
+  public Router getRouterById(String routerId) {
+    try {
+      OSClientV3 os = getClient();
+      return os.networking().router().get(routerId);
+    } catch (Exception ex) {
+      log.error("라우터 상세 정보 조회 중 오류 발생: {}", ex.getMessage());
+      throw new RuntimeException("라우터 상세 정보 조회 중 오류가 발생했습니다.", ex);
+    }
+  }
+
+  public void attachRouter(RouterAttachDetachDto routerAttachDetachDto) {
+    try {
+      OSClientV3 os = getClient();
+      os.networking().router().attachInterface(
+              routerAttachDetachDto.getRouterId(),
+              AttachInterfaceType.SUBNET,
+              routerAttachDetachDto.getSubnetId()
+      );
+    } catch (Exception ex) {
+      log.error("라우터 인터페이스 연결 중 오류 발생: {}", ex.getMessage());
+      throw new RuntimeException("라우터 인터페이스 연결 중 오류가 발생했습니다.", ex);
+    }
+  }
+
+  public void detachRouter(RouterAttachDetachDto routerAttachDetachDto) {
+    try {
+      OSClientV3 os = getClient();
+      os.networking().router().detachInterface(
+              routerAttachDetachDto.getRouterId(),
+              routerAttachDetachDto.getSubnetId(),
+              null
+      );
+    } catch (Exception ex) {
+      log.error("라우터 인터페이스 연결 해제 중 오류 발생: {}", ex.getMessage());
+      throw new RuntimeException("라우터 인터페이스 연결 해제 중 오류가 발생했습니다.", ex);
+    }
+  }
+
+  public void toggleStateRouter(RouterToggleStateDto routerToggleStateDto) {
+    try {
+      OSClientV3 os = getClient();
+      os.networking().router().toggleAdminStateUp(
+              routerToggleStateDto.getRouterId(),
+              routerToggleStateDto.isAdminStateUp()
+      );
+    } catch (Exception ex) {
+      log.error("라우터 상태 변경 중 오류 발생: {}", ex.getMessage());
+      throw new RuntimeException("라우터 상태 변경 중 오류가 발생했습니다.", ex);
     }
   }
 
