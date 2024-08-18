@@ -1,6 +1,5 @@
 package com.aoldacloud.console.domain.network;
 
-import com.aoldacloud.console.domain.compute.dto.ServerDetailsDto;
 import com.aoldacloud.console.domain.network.dto.*;
 import com.aoldacloud.console.global.ResponseWrapper;
 import io.swagger.v3.oas.annotations.Operation;
@@ -8,19 +7,26 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@RestController("/api/v1.0/network")
+@RestController
+@RequestMapping("/api/v1.0/network")
 @RequiredArgsConstructor
+@Slf4j
+@Tag(name = "Network", description = "AoldaCloud 네트워크와 관련된 API")
 public class NetworkController {
 
     private final NetworkService networkService;
 
+
+    // Subnet
     @Operation(summary = "서브넷 생성", description = "새로운 서브넷을 생성합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "서브넷 생성 성공",
@@ -41,7 +47,7 @@ public class NetworkController {
                     content = @Content(mediaType = "application/json"))
     })
     @DeleteMapping("/subnets/{subnetId}")
-    public ResponseEntity<Void> deleteServer(@PathVariable String subnetId) {
+    public ResponseEntity<Void> deleteSubnet(@PathVariable String subnetId) {
         networkService.deleteSubnet(subnetId);
         return ResponseEntity.noContent().build();
     }
@@ -54,7 +60,7 @@ public class NetworkController {
                     content = @Content(mediaType = "application/json"))
     })
     @GetMapping("/subnets")
-    public ResponseEntity<ResponseWrapper<List<SubnetDetailsDto>>> listServers() {
+    public ResponseEntity<ResponseWrapper<List<SubnetDetailsDto>>> listSubnets() {
         List<SubnetDetailsDto> subnets = networkService.listSubnets();
         return ResponseWrapper.success(subnets);
     }
@@ -69,7 +75,7 @@ public class NetworkController {
                     content = @Content(mediaType = "application/json"))
     })
     @GetMapping("/subnets/{subnetId}")
-    public ResponseEntity<ResponseWrapper<SubnetDetailsDto>> getServerDetails(@PathVariable String subnetId) {
+    public ResponseEntity<ResponseWrapper<SubnetDetailsDto>> getSubnetDetails(@PathVariable String subnetId) {
         SubnetDetailsDto subnet = networkService.getSubnetDetails(subnetId);
         if (subnet == null) {
             return ResponseWrapper.error("서브넷을 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
@@ -77,6 +83,8 @@ public class NetworkController {
         return ResponseWrapper.success(subnet);
     }
 
+
+    // Port
     @Operation(summary = "포트 생성", description = "새로운 포트를 생성합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "포트 생성 성공",
@@ -93,7 +101,7 @@ public class NetworkController {
     @Operation(summary = "포트 업데이트", description = "기존 포트를 업데이트합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "포트 업데이트 성공",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ServerDetailsDto.class))),
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = PortDetailsDto.class))),
             @ApiResponse(responseCode = "500", description = "서버 오류",
                     content = @Content(mediaType = "application/json"))
     })
@@ -146,10 +154,12 @@ public class NetworkController {
         return ResponseWrapper.success(port);
     }
 
+
+    // Router
     @Operation(summary = "라우터 생성", description = "새로운 라우터를 생성합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "라우터 생성 성공",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = PortDetailsDto.class))),
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = RouterDetailsDto.class))),
             @ApiResponse(responseCode = "500", description = "서버 오류",
                     content = @Content(mediaType = "application/json"))
     })
@@ -162,7 +172,7 @@ public class NetworkController {
     @Operation(summary = "라우터 업데이트", description = "기존 라우터를 업데이트합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "라우터 업데이트 성공",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ServerDetailsDto.class))),
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = RouterDetailsDto.class))),
             @ApiResponse(responseCode = "500", description = "서버 오류",
                     content = @Content(mediaType = "application/json"))
     })
@@ -187,7 +197,7 @@ public class NetworkController {
     @Operation(summary = "라우터 목록 조회", description = "라우터 목록을 조회합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "라우터 목록 조회 성공",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = PortDetailsDto.class))),
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = RouterDetailsDto.class))),
             @ApiResponse(responseCode = "500", description = "서버 오류",
                     content = @Content(mediaType = "application/json"))
     })
@@ -200,7 +210,7 @@ public class NetworkController {
     @Operation(summary = "라우터 상세 정보 조회", description = "특정 라우터의 상세 정보를 조회합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "라우터 상세 정보 조회 성공",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = PortDetailsDto.class))),
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = RouterDetailsDto.class))),
             @ApiResponse(responseCode = "404", description = "라우터를 찾을 수 없음",
                     content = @Content(mediaType = "application/json")),
             @ApiResponse(responseCode = "500", description = "서버 오류",
@@ -248,6 +258,46 @@ public class NetworkController {
     @PutMapping("/routers/state")
     public ResponseEntity<Void> toggleStateRouter(@RequestBody RouterToggleStateDto routerToggleStateDto) {
         networkService.toggleStateRouter(routerToggleStateDto);
+        return ResponseEntity.noContent().build();
+    }
+
+
+    //Floating IP
+    @Operation(summary = "Floating IP 생성", description = "새로운 Floating IP를 생성합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Floating IP 생성 성공",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = FloatingIpDetailsDto.class))),
+            @ApiResponse(responseCode = "500", description = "서버 오류",
+                    content = @Content(mediaType = "application/json"))
+    })
+    @PostMapping("/fips")
+    public ResponseEntity<ResponseWrapper<FloatingIpDetailsDto>> createFloatingIp(FloatingIpCreateDto floatingIpCreateDto) {
+        FloatingIpDetailsDto floatingIp = networkService.createFloatingIp(floatingIpCreateDto);
+        return ResponseWrapper.success(floatingIp);
+    }
+
+    @Operation(summary = "Floating IP 목록 조회", description = "Floating IP 목록을 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Floating IP 목록 조회 성공",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = FloatingIpDetailsDto.class))),
+            @ApiResponse(responseCode = "500", description = "서버 오류",
+                    content = @Content(mediaType = "application/json"))
+    })
+    @GetMapping("/fips")
+    public ResponseEntity<ResponseWrapper<List<FloatingIpDetailsDto>>> listFloatingIps() {
+        List<FloatingIpDetailsDto> floatingIps = networkService.listFloatingIps();
+        return ResponseWrapper.success(floatingIps);
+    }
+
+    @Operation(summary = "Floating IP 삭제", description = "Floating IP를 삭제합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Floating IP 삭제 성공"),
+            @ApiResponse(responseCode = "500", description = "서버 오류",
+                    content = @Content(mediaType = "application/json"))
+    })
+    @DeleteMapping("/fips/{floatingIpId}")
+    public ResponseEntity<Void> deleteFloatingIp(@PathVariable String floatingIpId) {
+        networkService.deleteFloatingIp(floatingIpId);
         return ResponseEntity.noContent().build();
     }
 }

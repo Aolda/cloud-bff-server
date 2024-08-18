@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.openstack4j.api.Builders;
 import org.openstack4j.api.OSClient.OSClientV3;
 import org.openstack4j.model.network.*;
+import org.openstack4j.model.network.options.PortListOptions;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -233,6 +234,42 @@ public class NeutronRepository {
     } catch (Exception ex) {
       log.error("라우터 상태 변경 중 오류 발생: {}", ex.getMessage());
       throw new RuntimeException("라우터 상태 변경 중 오류가 발생했습니다.", ex);
+    }
+  }
+
+  public List<? extends NetFloatingIP> listFloatingIps() {
+    try {
+      OSClientV3 os = getClient();
+      return os.networking().floatingip().list();
+    } catch (Exception ex) {
+      log.error("Floating IP 목록 조회 중 오류 발생: {}", ex.getMessage());
+      throw new RuntimeException("Floating IP 목록 조회 중 오류가 발생했습니다.", ex);
+    }
+  }
+
+  public NetFloatingIP createFloatingIp(FloatingIpCreateDto floatingIpCreateDto) {
+    try {
+      OSClientV3 os = getClient();
+
+      NetFloatingIP fip = Builders.netFloatingIP()
+              .portId(floatingIpCreateDto.getPortId())
+              .floatingNetworkId(floatingIpCreateDto.getNetworkId())
+              .build();
+      fip = os.networking().floatingip().create(fip);
+      return fip;
+    } catch (Exception ex) {
+      log.error("Floating IP 생성 중 오류 발생: {}", ex.getMessage());
+      throw new RuntimeException("Floating IP 생성 중 오류가 발생했습니다.", ex);
+    }
+  }
+
+  public void deleteFloatingIp(String floatingIpId) {
+    try {
+      OSClientV3 os = getClient();
+      os.networking().floatingip().delete(floatingIpId);
+    } catch (Exception ex) {
+      log.error("Floating IP 삭제 중 오류 발생: {}", ex.getMessage());
+      throw new RuntimeException("Floating IP 삭제 중 오류가 발생했습니다.", ex);
     }
   }
 
