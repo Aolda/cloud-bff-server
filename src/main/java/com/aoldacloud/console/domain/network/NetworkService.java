@@ -4,6 +4,7 @@ import com.aoldacloud.console.domain.network.dto.*;
 import com.aoldacloud.console.global.repository.NeutronRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.openstack4j.model.network.NetFloatingIP;
 import org.openstack4j.model.network.Port;
 import org.openstack4j.model.network.Router;
 import org.openstack4j.model.network.Subnet;
@@ -217,6 +218,42 @@ public class NetworkService {
     } catch (RuntimeException ex) {
       log.error("라우터 상태 변경 실패: {}", ex.getMessage());
       throw new RuntimeException("라우터 상태 변경 중 오류가 발생했습니다.", ex);
+    }
+  }
+
+  public List<FloatingIpDetailsDto> listFloatingIps() {
+    try {
+      log.info("Floating IP 목록 요청");
+      return neutronRepository.listFloatingIps().stream()
+              .map(FloatingIpDetailsDto::new)
+              .collect(Collectors.toList());
+    } catch (RuntimeException ex) {
+      log.error("Floating IP 목록 조회 실패: {}", ex.getMessage());
+      throw new RuntimeException("Floating IP 목록 조회 중 오류가 발생했습니다.", ex);
+    }
+  }
+
+
+  public FloatingIpDetailsDto createFloatingIp(FloatingIpCreateDto floatingIpCreateDto) {
+    try {
+      log.info("Floating IP 생성 요청: {}", floatingIpCreateDto.getNetworkId());
+      NetFloatingIP createdFIp = neutronRepository.createFloatingIp(floatingIpCreateDto);
+      log.info("Floating IP 생성 성공: {}", createdFIp.getId());
+      return new FloatingIpDetailsDto(createdFIp);
+    } catch (RuntimeException ex) {
+      log.error("Floating IP 생성 실패: {}", ex.getMessage());
+      throw new RuntimeException("Floating IP 생성 중 오류가 발생했습니다.", ex);
+    }
+  }
+
+  public void deleteFloatingIp(String floatingIpId) {
+    try {
+      log.info("Floating IP 삭제 요청: {}", floatingIpId);
+      neutronRepository.deleteFloatingIp(floatingIpId);
+      log.info("Floating IP 삭제 성공: {}", floatingIpId);
+    } catch (RuntimeException ex) {
+      log.error("Floating IP 삭제 실패: {}", ex.getMessage());
+      throw new RuntimeException("Floating IP 삭제 중 오류가 발생했습니다.", ex);
     }
   }
 }
