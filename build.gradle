@@ -31,6 +31,7 @@ dependencies {
 	implementation 'com.github.openstack4j.core:openstack4j-core:3.12'
 	implementation 'com.github.openstack4j.core.connectors:openstack4j-resteasy:3.12'
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.0.2'
+	implementation 'org.springframework.cloud:spring-cloud-starter-openfeign:4.1.3'
 }
 
 tasks.named('test') {
